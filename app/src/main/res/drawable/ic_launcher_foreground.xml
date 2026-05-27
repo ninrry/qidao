@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Outer ring -->
+    <path
+        android:fillColor="#5CC8A1"
+        android:pathData="M54,11.5 A42.5,42.5 0 1,1 54,96.5 A42.5,42.5 0 1,1 54,11.5 Z" />
+    <!-- Yin-Yang dark half -->
+    <path
+        android:fillColor="#283B4D"
+        android:pathData="M54,24.5C70.2,24.5 83.5,37.8 83.5,54C83.5,70.2 70.2,83.5 54,83.5C65.4,83.5 74.7,74.2 74.7,62.8C74.7,51.5 65.4,42.2 54,42.2C42.6,42.2 33.3,32.9 33.3,21.5C33.3,10.1 42.6,24.5 54,24.5Z" />
+    <!-- Yin-Yang light half -->
+    <path
+        android:fillColor="#6FE0B5"
+        android:pathData="M54,83.5C37.8,83.5 24.5,70.2 24.5,54C24.5,37.8 37.8,24.5 54,24.5C42.6,24.5 33.3,33.8 33.3,45.1C33.3,56.5 42.6,65.8 54,65.8C65.4,65.8 74.7,75.1 74.7,86.5C74.7,97.8 65.4,83.5 54,83.5Z" />
+    <!-- Dark inner eye -->
+    <path
+        android:fillColor="#1F2D3A"
+        android:pathData="M54,37.7 A5.1,5.1 0 1,1 54,47.9 A5.1,5.1 0 1,1 54,37.7 Z" />
+    <!-- Light inner eye -->
+    <path
+        android:fillColor="#6FE0B5"
+        android:pathData="M54,66.4 A5.1,5.1 0 1,1 54,76.6 A5.1,5.1 0 1,1 54,66.4 Z" />
+    <!-- Chess grid -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeWidth="0.6"
+        android:strokeColor="#FFFFFF"
+        android:strokeAlpha="0.15"
+        android:pathData="M37.1,37.1 L70.9,37.1 M37.1,45.6 L70.9,45.6 M37.1,54 L70.9,54 M37.1,62.4 L70.9,62.4 M37.1,70.9 L70.9,70.9 M37.1,37.1 L37.1,70.9 M45.6,37.1 L45.6,70.9 M54,37.1 L54,70.9 M62.4,37.1 L62.4,70.9 M70.9,37.1 L70.9,70.9" />
+</vector>

@@ -1,0 +1,32 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- 古琴琴身（写意长条木质弧面，琴头至琴尾） -->
+    <path
+        android:strokeColor="#80FFFFFF"
+        android:strokeWidth="1.6"
+        android:strokeLineCap="round"
+        android:pathData="M3,8 L19,8 C20.5,8 21.5,9.5 21,11 L20,14 C19.5,15 18.5,16 17,16 L5,16 C3.5,16 2,14.5 2,13 L2,10" />
+
+    <!-- 琴徽点点 (已转换为 path 以符合 Android 资源链接规范) -->
+    <path
+        android:fillColor="#4DFFFFFF"
+        android:pathData="M 6, 11.2 A 0.8, 0.8 0 1, 1 6, 12.8 A 0.8, 0.8 0 1, 1 6, 11.2" />
+    <path
+        android:fillColor="#4DFFFFFF"
+        android:pathData="M 10, 11.2 A 0.8, 0.8 0 1, 1 10, 12.8 A 0.8, 0.8 0 1, 1 10, 11.2" />
+    <path
+        android:fillColor="#4DFFFFFF"
+        android:pathData="M 14, 11.2 A 0.8, 0.8 0 1, 1 14, 12.8 A 0.8, 0.8 0 1, 1 14, 11.2" />
+
+    <!-- 断弦斜劈（苍劲斜线割断音符，象征休兵无声） -->
+    <path
+        android:strokeColor="#C04851"
+        android:strokeWidth="1.6"
+        android:strokeLineCap="round"
+        android:pathData="M2,4 L22,20" />
+
+</vector>

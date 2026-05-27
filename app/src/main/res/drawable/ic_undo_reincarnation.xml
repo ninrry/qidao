@@ -1,0 +1,27 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- 写意水墨时光轮盘（逆时针半弧，尾部变细） -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.6"
+        android:strokeLineCap="round"
+        android:pathData="M19,12 C19,15.86 15.86,19 12,19 C8.14,19 5,15.86 5,12 C5,8.14 8.14,5 12,5 C14.5,5 16.7,6.3 18,8.2" />
+
+    <!-- 逆时针指引箭头 -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M14.5,8.5 L18.5,8.5 L18.5,4.5 Z" />
+
+    <!-- 圈内太极双游鱼的写意化身点睛 (已转换为 path) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M 10, 10.8 A 1.2, 1.2 0 1, 1 10, 13.2 A 1.2, 1.2 0 1, 1 10, 10.8" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M 14, 10.8 A 1.2, 1.2 0 1, 1 14, 13.2 A 1.2, 1.2 0 1, 1 14, 10.8" />
+
+</vector>

@@ -1,0 +1,24 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- 投石入水，中心激荡的起笔 (已转换为 path) -->
+    <path
+        android:fillColor="#E9C46A"
+        android:pathData="M 12, 10 A 2, 2 0 1, 1 12, 14 A 2, 2 0 1, 1 12, 10" />
+
+    <!-- 第一层微波涟漪（细密弧线） -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.2"
+        android:pathData="M12,7 A5,5 0,0 1,17,12 A5,5 0,0 1,12,17 A5,5 0,0 1,7,12" />
+
+    <!-- 第二层阔野涟漪（渐淡，有写意断笔，模拟水流逸散） -->
+    <path
+        android:strokeColor="#B08D3E"
+        android:strokeWidth="1"
+        android:pathData="M12,4 C16.4,4 20,7.6 20,12 C20,16.4 16.4,20 12,20 C8.5,20 5.5,17.8 4.5,14.5" />
+
+</vector>

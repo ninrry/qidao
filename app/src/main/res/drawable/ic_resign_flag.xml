@@ -1,0 +1,58 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- 扇骨1 (最左侧，斜向上) -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.2"
+        android:strokeLineCap="round"
+        android:pathData="M12,21 L4,10" />
+
+    <!-- 扇骨2 (偏左) -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.2"
+        android:strokeLineCap="round"
+        android:pathData="M12,21 L8,6" />
+
+    <!-- 扇骨3 (正中) -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.2"
+        android:strokeLineCap="round"
+        android:pathData="M12,21 L12,4" />
+
+    <!-- 扇骨4 (偏右) -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.2"
+        android:strokeLineCap="round"
+        android:pathData="M12,21 L16,6" />
+
+    <!-- 扇骨5 (最右侧，斜向上) -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.2"
+        android:strokeLineCap="round"
+        android:pathData="M12,21 L20,10" />
+
+    <!-- 扇面外轮廓（波浪起伏的写意褶皱，半透明填充） -->
+    <path
+        android:fillColor="#33FFFFFF"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.2"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M4,10 C6,8 10,4 12,4 C14,4 18,8 20,10 C18,11.5 15,12.5 12,12.5 C9,12.5 6,11.5 4,10 Z" />
+
+    <!-- 扇坠（古典中国结及流苏） -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1"
+        android:strokeLineCap="round"
+        android:pathData="M12,21 L12,23 M11,23 L13,23" />
+
+</vector>

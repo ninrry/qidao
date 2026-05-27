@@ -1,0 +1,24 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- 主竹叶：优雅地指向左侧，叶肉丰满，构成向左返回的主趋势 -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M20,12 C16,11.2 9.5,8.5 4,12 C8.8,13.8 15.5,14 20,12 Z" />
+
+    <!-- 伴生小竹叶：在上方斜刺而出，加强左向指示的纵深感 -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M18,9.5 C14.5,9.2 10.2,7.2 6.5,10 C10.2,11.2 15,11 18,9.5 Z" />
+
+    <!-- 写意竹节根茎：点缀于右侧起笔处，营造竹枝的天然骨感 -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.2"
+        android:strokeLineCap="round"
+        android:pathData="M19.5,11.5 C20.5,12 21,12.5 21.5,12" />
+
+</vector>

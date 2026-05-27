@@ -1,0 +1,49 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- 伏羲八卦盘外围正八边形饰边 -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.2"
+        android:strokeLineJoin="miter"
+        android:pathData="M8.5,2 L15.5,2 L22,8.5 L22,15.5 L15.5,22 L8.5,22 L2,15.5 L2,8.5 Z" />
+
+    <!-- 内切罗盘圆轨 -->
+    <path
+        android:strokeColor="#80FFFFFF"
+        android:strokeWidth="0.8"
+        android:pathData="M12,12m-8,0a8,8 0,1 1,16 0a8,8 0,1 1,-16 0" />
+
+    <!-- 乾卦 (上方：三条实线 ☰) -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="0.8"
+        android:pathData="M10,5 L14,5 M10,6.2 L14,6.2 M10,7.4 L14,7.4" />
+
+    <!-- 坤卦 (下方：三条断线 ☷) -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="0.8"
+        android:pathData="M10,16.6 L11.6,16.6 M12.4,16.6 L14,16.6 M10,17.8 L11.6,17.8 M12.4,17.8 L14,17.8 M10,19 L11.6,19 M12.4,19 L14,19" />
+
+    <!-- 坎卦 (左侧：中实旁断 ☵) -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="0.8"
+        android:pathData="M5.5,10.5 L7.5,10.5 M5.5,12 L7.5,12 M5.5,13.5 L7.5,13.5" />
+
+    <!-- 离卦 (右侧：中虚旁实 ☲) -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="0.8"
+        android:pathData="M16.5,10.5 L18.5,10.5 M16.5,12 L17.2,12 M17.8,12 L18.5,12 M16.5,13.5 L18.5,13.5" />
+
+    <!-- 中心太极眼 (已转换为 path) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M 12, 10 A 2, 2 0 1, 1 12, 14 A 2, 2 0 1, 1 12, 10" />
+
+</vector>
