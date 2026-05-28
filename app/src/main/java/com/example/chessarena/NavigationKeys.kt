@@ -7,3 +7,4 @@ import kotlinx.serialization.Serializable
 @Serializable data object XiangqiGame : NavKey
 @Serializable data object GomokuGame : NavKey
 @Serializable data object Settings : NavKey
+@Serializable data object History : NavKey

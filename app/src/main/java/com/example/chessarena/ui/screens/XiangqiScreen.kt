@@ -37,6 +37,8 @@ import com.example.chessarena.ui.components.*
 import com.example.chessarena.ui.components.dialogs.DifficultyDialog
 import com.example.chessarena.ui.components.dialogs.EngineErrorDialog
 import com.example.chessarena.ui.components.dialogs.GameOverDialog
+import com.example.chessarena.ui.components.dialogs.ExitConfirmDialog
+import androidx.activity.compose.BackHandler
 import com.example.chessarena.viewmodel.SettingsViewModel
 import com.example.chessarena.viewmodel.XiangqiViewModel
 
@@ -55,6 +57,13 @@ fun XiangqiScreen(
     // 面板切换状态
     var showHistory by remember { mutableStateOf(settingsState.showMoveHistory) }
     var showEval by remember { mutableStateOf(settingsState.showEvalBar) }
+    var showExitConfirm by remember { mutableStateOf(false) }
+
+    // 拦截物理返回键
+    val isGameInProgress = uiState.isGameActive
+    BackHandler(enabled = isGameInProgress) {
+        showExitConfirm = true
+    }
 
     // 将军抖动动画
     val shakeAnim = remember { Animatable(0f) }
@@ -150,7 +159,7 @@ fun XiangqiScreen(
             // 顶部栏
             GameTopBar(
                 title = "中国象棋 · 棋道",
-                onBack = onBack,
+                onBack = { if (isGameInProgress) showExitConfirm = true else onBack() },
                 onUndo = { viewModel.onUndo() },
                 onResign = { viewModel.onResign() },
                 canUndo = uiState.moveHistory.size >= 2 && !uiState.isAiThinking
@@ -170,7 +179,7 @@ fun XiangqiScreen(
                     avatarColor = AiAvatarRed,
                     name = uiState.difficulty.displayName,
                     level = "Lvl ${uiState.difficulty.engineParam}",
-                    info = "执${aiSideName} · ${uiState.difficulty.maxThinkTime}ms",
+                    info = "执${aiSideName} · ${uiState.difficulty.formatThinkTime()}",
                     status = when {
                         uiState.isAiThinking -> "思考中"
                         uiState.isInCheck -> "被将军"
@@ -313,6 +322,17 @@ fun XiangqiScreen(
                 message = error,
                 onDismiss = { viewModel.onDismissEngineError() },
                 onRetry = { viewModel.onRetryEngine() }
+            )
+        }
+
+        if (showExitConfirm) {
+            ExitConfirmDialog(
+                onConfirm = {
+                    showExitConfirm = false
+                    viewModel.onResign()
+                    onBack()
+                },
+                onDismiss = { showExitConfirm = false }
             )
         }
     }

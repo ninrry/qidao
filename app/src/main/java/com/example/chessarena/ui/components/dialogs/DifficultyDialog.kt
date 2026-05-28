@@ -212,7 +212,7 @@ private fun DifficultyItem(
                         Text(text = "Lv${difficulty.engineParam}", modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp), color = if (isSelected) XiangqiCardGreen else if (isDark) OnSurfaceDarkSecondary else StoneGray, style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, fontSize = 10.sp))
                     }
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text(text = "${difficulty.maxThinkTime}ms", color = if (isSelected) XiangqiCardGreen else if (isDark) OnSurfaceDarkSecondary else StoneGray, fontSize = 10.sp, fontWeight = FontWeight.Medium)
+                    Text(text = difficulty.formatThinkTime(), color = if (isSelected) XiangqiCardGreen else if (isDark) OnSurfaceDarkSecondary else StoneGray, fontSize = 10.sp, fontWeight = FontWeight.Medium)
                 }
                 Text(text = difficulty.description, style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.5.sp, lineHeight = 14.sp), color = if (isDark) OnSurfaceDarkSecondary else StoneGray, maxLines = 1)
             }

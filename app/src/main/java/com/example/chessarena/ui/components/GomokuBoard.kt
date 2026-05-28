@@ -353,55 +353,62 @@ private fun DrawScope.drawGomokuStarPoints(
 
 // ── 黑子 ──────────────────────────────────────────────────
 private fun DrawScope.drawBlackStone(center: Offset, radius: Float, isLast: Boolean, colors: ChessArenaExtendedColors) {
-    // 投影
+    // 1. 双层柔和微物理阴影
     drawCircle(
-        color = Color.Black.copy(alpha = 0.35f),
-        radius = radius,
-        center = Offset(center.x + 2f, center.y + 3f)
+        color = Color.Black.copy(alpha = 0.20f),
+        radius = radius * 1.05f,
+        center = center + Offset(radius * 0.08f, radius * 0.11f)
     )
-    // 主体渐变
+    drawCircle(
+        color = Color.Black.copy(alpha = 0.42f),
+        radius = radius * 0.95f,
+        center = center + Offset(radius * 0.03f, radius * 0.04f)
+    )
+
+    // 2. 玄石多色径向渐变
     drawCircle(
         brush = Brush.radialGradient(
             colors = listOf(
-                colors.stoneBlack.copy(alpha = 0.8f),
-                colors.stoneBlack,
-                Color(0xFF0A0A0A),
+                Color(0xFF3E3F45),
+                Color(0xFF18181C),
+                Color(0xFF060608)
             ),
-            center = Offset(center.x - radius * 0.25f, center.y - radius * 0.25f),
-            radius = radius * 1.8f
+            center = center - Offset(radius * 0.22f, radius * 0.22f),
+            radius = radius * 1.55f
         ),
         radius = radius,
         center = center
     )
-    // 高光弧
-    val highlightPath = Path().apply {
-        val r = radius * 0.35f
-        addOval(
-            androidx.compose.ui.geometry.Rect(
-                center.x - r - radius * 0.15f,
-                center.y - r - radius * 0.3f,
-                center.x + r - radius * 0.15f,
-                center.y + r * 0.3f - radius * 0.3f
-            )
-        )
-    }
+
+    // 3. 高光反射亮弧
     drawPath(
-        path = highlightPath,
-        brush = Brush.radialGradient(
-            colors = listOf(
-                Color.White.copy(alpha = 0.25f),
-                Color.Transparent
-            ),
-            center = Offset(center.x - radius * 0.15f, center.y - radius * 0.3f),
-            radius = radius * 0.5f
-        )
+        path = Path().apply {
+            addArc(
+                androidx.compose.ui.geometry.Rect(
+                    center.x - radius * 0.7f,
+                    center.y - radius * 0.7f,
+                    center.x + radius * 0.1f,
+                    center.y + radius * 0.1f
+                ),
+                180f,
+                90f
+            )
+        },
+        color = Color.White.copy(alpha = 0.16f),
+        style = Stroke(width = 1.8.dp.toPx(), cap = StrokeCap.Round)
     )
 
-    // 最后落子标记
+    // 4. 国风古金双层水墨指示星环
     if (isLast) {
         drawCircle(
-            color = colors.evalNegative,
-            radius = radius * 0.18f,
+            color = Color(0xFFD4AF37),
+            radius = radius * 0.28f,
+            center = center,
+            style = Stroke(width = 1.6.dp.toPx())
+        )
+        drawCircle(
+            color = Color(0xFFD4AF37),
+            radius = radius * 0.08f,
             center = center
         )
     }
@@ -409,62 +416,70 @@ private fun DrawScope.drawBlackStone(center: Offset, radius: Float, isLast: Bool
 
 // ── 白子 ──────────────────────────────────────────────────
 private fun DrawScope.drawWhiteStone(center: Offset, radius: Float, isLast: Boolean, colors: ChessArenaExtendedColors) {
-    // 投影
+    // 1. 双层柔和微物理阴影
     drawCircle(
-        color = Color.Black.copy(alpha = 0.25f),
-        radius = radius,
-        center = Offset(center.x + 2f, center.y + 3f)
+        color = Color(0xFF1A150D).copy(alpha = 0.15f),
+        radius = radius * 1.02f,
+        center = center + Offset(radius * 0.06f, radius * 0.09f)
     )
-    // 主体渐变（玻璃效果）
+    drawCircle(
+        color = Color(0xFF1A150D).copy(alpha = 0.26f),
+        radius = radius * 0.94f,
+        center = center + Offset(radius * 0.02f, radius * 0.03f)
+    )
+
+    // 2. 白玛瑙温润多色渐变
     drawCircle(
         brush = Brush.radialGradient(
             colors = listOf(
-                Color.White,
-                colors.stoneWhite,
-                colors.stoneShadow,
+                Color(0xFFFFFFFF),
+                Color(0xFFFAF9F4),
+                Color(0xFFDFDCD2)
             ),
-            center = Offset(center.x - radius * 0.2f, center.y - radius * 0.2f),
-            radius = radius * 1.6f
+            center = center - Offset(radius * 0.18f, radius * 0.18f),
+            radius = radius * 1.5f
         ),
         radius = radius,
         center = center
     )
-    // 边线
+
+    // 3. 立体玉石微压纹描边
     drawCircle(
-        color = Color(0xFFAAAAAA),
-        radius = radius,
+        color = Color(0xFFD0CDC2).copy(alpha = 0.6f),
+        radius = radius * 0.98f,
         center = center,
-        style = Stroke(width = 1f)
-    )
-    // 高光
-    val highlightPath = Path().apply {
-        val r = radius * 0.3f
-        addOval(
-            androidx.compose.ui.geometry.Rect(
-                center.x - r - radius * 0.15f,
-                center.y - r - radius * 0.35f,
-                center.x + r - radius * 0.15f,
-                center.y + r * 0.2f - radius * 0.35f
-            )
-        )
-    }
-    drawPath(
-        path = highlightPath,
-        brush = Brush.radialGradient(
-            colors = listOf(
-                Color.White.copy(alpha = 0.8f),
-                Color.Transparent
-            ),
-            center = Offset(center.x - radius * 0.15f, center.y - radius * 0.35f),
-            radius = radius * 0.45f
-        )
+        style = Stroke(width = 0.8.dp.toPx())
     )
 
-    // 最后落子标记
+    // 4. 玻璃质感反射高光
+    drawPath(
+        path = Path().apply {
+            addArc(
+                androidx.compose.ui.geometry.Rect(
+                    center.x - radius * 0.65f,
+                    center.y - radius * 0.65f,
+                    center.x + radius * 0.05f,
+                    center.y + radius * 0.05f
+                ),
+                180f,
+                90f
+            )
+        },
+        color = Color.White.copy(alpha = 0.72f),
+        style = Stroke(width = 1.6.dp.toPx(), cap = StrokeCap.Round)
+    )
+
+    // 5. 国风古金双层水墨指示星环
     if (isLast) {
         drawCircle(
-            color = colors.evalNegative,
-            radius = radius * 0.18f,
+            color = Color(0xFFD4AF37),
+            radius = radius * 0.28f,
+            center = center,
+            style = Stroke(width = 1.6.dp.toPx())
+        )
+        drawCircle(
+            color = Color(0xFFD4AF37),
+            radius = radius * 0.08f,
             center = center
         )
     }

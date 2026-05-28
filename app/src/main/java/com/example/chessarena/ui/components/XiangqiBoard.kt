@@ -101,43 +101,62 @@ fun XiangqiBoard(
         )
     }
 
-    // 走棋平移物理动画 Progress (从 0f 到 1f)
-    val animProgress = remember { Animatable(0f) }
+    // 走棋平移物理动画与水墨涟漪同步状态重置机制 (防止首帧闪烁)
+    var currentLastMove by remember { mutableStateOf<XiangqiMoveData?>(null) }
+    var animValueState by remember { mutableStateOf(1f) }
+    var rippleAnimValueState by remember { mutableStateOf(1f) }
+
+    if (state.lastMove != currentLastMove) {
+        currentLastMove = state.lastMove
+        if (state.lastMove != null) {
+            animValueState = 0f
+            rippleAnimValueState = 0f
+        }
+    }
+
     LaunchedEffect(state.lastMove, animationSpeed) {
         val durationMs = motionDurationMs(animationSpeed, 280)
         if (state.lastMove != null) {
             if (durationMs == 0) {
-                animProgress.snapTo(1f)
+                animValueState = 1f
             } else {
-                animProgress.snapTo(0f)
-                animProgress.animateTo(
+                animate(
+                    initialValue = animValueState,
                     targetValue = 1f,
                     animationSpec = tween(durationMillis = durationMs, easing = FastOutSlowInEasing)
-                )
+                ) { value, _ ->
+                    animValueState = value
+                }
             }
         } else {
-            animProgress.snapTo(1f)
+            animValueState = 1f
         }
     }
 
-    // 宣纸水墨涟漪晕染扩散动画
-    val rippleAnim = remember { Animatable(0f) }
     LaunchedEffect(state.lastMove, animationSpeed) {
         val durationMs = motionDurationMs(animationSpeed, 600)
         if (state.lastMove != null) {
             if (durationMs == 0) {
-                rippleAnim.snapTo(1f)
+                rippleAnimValueState = 1f
             } else {
-                rippleAnim.snapTo(0f)
-                rippleAnim.animateTo(
+                animate(
+                    initialValue = rippleAnimValueState,
                     targetValue = 1f,
                     animationSpec = tween(durationMillis = durationMs, easing = EaseOutQuad)
-                )
+                ) { value, _ ->
+                    rippleAnimValueState = value
+                }
             }
         } else {
-            rippleAnim.snapTo(1f)
+            rippleAnimValueState = 1f
         }
     }
+
+    val selectAnimScale by animateFloatAsState(
+        targetValue = if (state.selectedPosition != null) 1.06f else 1.0f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
+        label = "selectAnimScale"
+    )
 
     // 捕获被吃的棋子
     var prevPieces by remember { mutableStateOf<List<XiangqiPieceData>>(emptyList()) }
@@ -217,7 +236,7 @@ fun XiangqiBoard(
         }
 
         // 5. 核心：棋子渲染
-        val animValue = animProgress.value
+        val animValue = animValueState
         val isAnimating = animValue < 1f
         val lastMove = state.lastMove
 
@@ -252,7 +271,7 @@ fun XiangqiBoard(
 
             drawPremiumPiece(
                 center = Offset(cx, cy),
-                radius = radius,
+                radius = if (isSelected) radius * selectAnimScale else radius,
                 piece = piece,
                 char = char,
                 isSelected = isSelected,
@@ -311,7 +330,7 @@ fun XiangqiBoard(
             val displayCol = if (isFlipped) 8 - lastMove.to.col else lastMove.to.col
             val cx = px + displayCol * cw
             val cy = py + displayRow * ch
-            val rVal = rippleAnim.value
+            val rVal = rippleAnimValueState
             if (rVal < 1f) {
                 // ── 1. 绘制 3 圈带有时间差的水墨波纹涟漪 ──
                 

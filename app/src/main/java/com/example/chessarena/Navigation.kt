@@ -11,6 +11,7 @@ import com.example.chessarena.ui.screens.GomokuScreen
 import com.example.chessarena.ui.screens.HomeScreen
 import com.example.chessarena.ui.screens.SettingsScreen
 import com.example.chessarena.ui.screens.XiangqiScreen
+import com.example.chessarena.ui.screens.HistoryScreen
 import android.app.Activity
 
 @Composable
@@ -49,6 +50,12 @@ fun MainNavigation() {
         }
         entry<Settings> {
           SettingsScreen(
+            onBack = { backStack.removeLastOrNull() },
+            modifier = Modifier.fillMaxSize()
+          )
+        }
+        entry<History> {
+          HistoryScreen(
             onBack = { backStack.removeLastOrNull() },
             modifier = Modifier.fillMaxSize()
           )

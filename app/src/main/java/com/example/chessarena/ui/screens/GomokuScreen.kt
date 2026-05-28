@@ -35,6 +35,8 @@ import com.example.chessarena.ui.components.*
 import com.example.chessarena.ui.components.dialogs.DifficultyDialog
 import com.example.chessarena.ui.components.dialogs.EngineErrorDialog
 import com.example.chessarena.ui.components.dialogs.GameOverDialog
+import com.example.chessarena.ui.components.dialogs.ExitConfirmDialog
+import androidx.activity.compose.BackHandler
 import com.example.chessarena.viewmodel.GomokuViewModel
 import com.example.chessarena.viewmodel.SettingsViewModel
 
@@ -51,6 +53,14 @@ fun GomokuScreen(
     val isDark = androidx.compose.foundation.isSystemInDarkTheme()
 
     var showHistory by remember { mutableStateOf(settingsState.showMoveHistory) }
+    var showEval by remember { mutableStateOf(settingsState.showEvalBar) }
+    var showExitConfirm by remember { mutableStateOf(false) }
+
+    // 拦截物理返回键
+    val isGameInProgress = uiState.isGameActive
+    BackHandler(enabled = isGameInProgress) {
+        showExitConfirm = true
+    }
 
     LaunchedEffect(uiState.moveHistory.size) {
         if (uiState.moveHistory.isNotEmpty()) {
@@ -110,7 +120,7 @@ fun GomokuScreen(
         Column(modifier = Modifier.fillMaxSize()) {
             GameTopBarGomoku(
                 title = "连珠五子棋 · 棋道",
-                onBack = onBack,
+                onBack = { if (isGameInProgress) showExitConfirm = true else onBack() },
                 onUndo = { viewModel.onUndo() },
                 onResign = { viewModel.onResign() },
                 canUndo = uiState.moveHistory.size >= 2 && !uiState.isAiThinking
@@ -125,7 +135,7 @@ fun GomokuScreen(
                     avatarColor = AiAvatarBlue,
                     name = uiState.difficulty.displayName,
                     level = "Lvl ${uiState.difficulty.engineParam}",
-                    info = "${uiState.difficulty.maxThinkTime}ms",
+                    info = uiState.difficulty.formatThinkTime(),
                     status = when {
                         uiState.isAiThinking -> "思考中"
                         else -> if (gameState?.currentTurn != uiState.playerSide) "回合中" else "等待中"
@@ -152,16 +162,30 @@ fun GomokuScreen(
                 }
 
                 Box(modifier = Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
-                    BoxWithConstraints(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        val boardSide = minOf(maxWidth, maxHeight)
-                        GomokuBoard(
-                            state = boardState,
-                            modifier = Modifier.size(boardSide),
-                            onPositionClick = viewModel::onPositionClick,
-                            showCoordinates = settingsState.showCoordinates,
-                            animationSpeed = settingsState.animationSpeed,
-                            boardTheme = settingsState.boardTheme
-                        )
+                    Row(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // 五子棋实时胜率/分差局势评估条
+                        AnimatedVisibility(visible = showEval) {
+                            EvalBar(
+                                score = uiState.evaluation,
+                                isThinking = uiState.isAiThinking,
+                                modifier = Modifier.fillMaxHeight(0.9f).width(20.dp)
+                            )
+                        }
+
+                        BoxWithConstraints(modifier = Modifier.weight(1f).fillMaxHeight(), contentAlignment = Alignment.Center) {
+                            val boardSide = minOf(maxWidth, maxHeight)
+                            GomokuBoard(
+                                state = boardState,
+                                modifier = Modifier.size(boardSide),
+                                onPositionClick = viewModel::onPositionClick,
+                                showCoordinates = settingsState.showCoordinates,
+                                animationSpeed = settingsState.animationSpeed,
+                                boardTheme = settingsState.boardTheme
+                            )
+                        }
                     }
 
                     val isPlayerTurn = uiState.gameState?.currentTurn == uiState.playerSide
@@ -190,7 +214,7 @@ fun GomokuScreen(
                     avatarColor = PlayerAvatarGreen,
                     name = "玩家",
                     level = "",
-                    info = "${uiState.difficulty.maxThinkTime}ms",
+                    info = uiState.difficulty.formatThinkTime(),
                     status = when {
                         uiState.isAiThinking -> "等待中"
                         else -> if (gameState?.currentTurn == uiState.playerSide) "回合中" else "等待中"
@@ -204,7 +228,9 @@ fun GomokuScreen(
                 GomokuToolBar(
                     onNewGame = { viewModel.onNewGame() },
                     onToggleHistory = { showHistory = !showHistory },
-                    showHistory = historyVisible
+                    onToggleEval = { showEval = !showEval },
+                    showHistory = historyVisible,
+                    showEval = showEval
                 )
             }
         }
@@ -246,6 +272,17 @@ fun GomokuScreen(
                 onRetry = { viewModel.onRetryEngine() }
             )
         }
+
+        if (showExitConfirm) {
+            ExitConfirmDialog(
+                onConfirm = {
+                    showExitConfirm = false
+                    viewModel.onResign()
+                    onBack()
+                },
+                onDismiss = { showExitConfirm = false }
+            )
+        }
     }
 }
 
@@ -283,7 +320,13 @@ private fun GameTopBarGomoku(
 }
 
 @Composable
-private fun GomokuToolBar(onNewGame: () -> Unit, onToggleHistory: () -> Unit, showHistory: Boolean) {
+private fun GomokuToolBar(
+    onNewGame: () -> Unit,
+    onToggleHistory: () -> Unit,
+    onToggleEval: () -> Unit,
+    showHistory: Boolean,
+    showEval: Boolean
+) {
     val isDark = androidx.compose.foundation.isSystemInDarkTheme()
     val activeColor = GomokuCardBlue
     val idleColor = if (isDark) OnSurfaceDarkSecondary else StoneGray
@@ -291,7 +334,8 @@ private fun GomokuToolBar(onNewGame: () -> Unit, onToggleHistory: () -> Unit, sh
     data class Tool(val label: String, val icon: Int, val active: Boolean, val onClick: () -> Unit)
     val tools = listOf(
         Tool("新局", R.drawable.ic_reset_chaos, false, onNewGame),
-        Tool("棋谱", R.drawable.ic_undo_reincarnation, showHistory, onToggleHistory)
+        Tool("棋谱", R.drawable.ic_undo_reincarnation, showHistory, onToggleHistory),
+        Tool("分析", R.drawable.ic_brain_pikafish, showEval, onToggleEval)
     )
 
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {

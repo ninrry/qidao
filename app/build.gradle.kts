@@ -141,4 +141,7 @@ dependencies {
   // Material Icons
   implementation(libs.androidx.compose.material.icons.core)
   implementation(libs.androidx.compose.material.icons.extended)
+
+  // Kotlinx Serialization JSON Runtime
+  implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 }

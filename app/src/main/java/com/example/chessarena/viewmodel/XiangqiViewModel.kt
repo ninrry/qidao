@@ -1,8 +1,11 @@
 package com.example.chessarena.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.chessarena.data.GamePreferences
+import com.example.chessarena.data.GameRecord
+import com.example.chessarena.data.DataRepository
 import com.example.chessarena.engine.ChessEngine
 import com.example.chessarena.engine.Difficulty
 import com.example.chessarena.engine.XiangqiEngine
@@ -54,7 +57,8 @@ data class XiangqiUiState(
     val capturedByPlayer: List<com.example.chessarena.game.xiangqi.Piece> = emptyList(),
     val capturedByAi: List<com.example.chessarena.game.xiangqi.Piece> = emptyList(),
     val isInCheck: Boolean = false,
-    val engineHealthError: String? = null
+    val engineHealthError: String? = null,
+    val isGameActive: Boolean = false
 )
 
 /**
@@ -89,6 +93,9 @@ class XiangqiViewModel(
     private val capturedByPlayer = mutableListOf<com.example.chessarena.game.xiangqi.Piece>()
     private val capturedByAi = mutableListOf<com.example.chessarena.game.xiangqi.Piece>()
 
+    /** 是否已保存过当前对局记录，防止重复保存 */
+    private var recordSaved = false
+
     init {
         // 初始化引擎
         viewModelScope.launch {
@@ -111,6 +118,7 @@ class XiangqiViewModel(
             stateHistory.add(initialState)
             capturedByPlayer.clear()
             capturedByAi.clear()
+            recordSaved = false
 
             _uiState.update {
                 XiangqiUiState(
@@ -118,7 +126,8 @@ class XiangqiViewModel(
                     difficulty = difficulty,
                     showDifficultyDialog = false,
                     playerSide = playerSide,
-                    isInCheck = false
+                    isInCheck = false,
+                    isGameActive = true
                 )
             }
 
@@ -332,7 +341,8 @@ class XiangqiViewModel(
                     _uiState.update {
                         it.copy(
                             isAiThinking = false,
-                            gameOverMessage = "黑方无路可走，红方获胜！"
+                            gameOverMessage = "黑方无路可走，红方获胜！",
+                            isGameActive = false
                         )
                     }
                 }
@@ -344,7 +354,8 @@ class XiangqiViewModel(
                 _uiState.update {
                     it.copy(
                         isAiThinking = false,
-                        gameOverMessage = "对局调度异常: ${e.message ?: "未知错误"}"
+                        gameOverMessage = "对局调度异常: ${e.message ?: "未知错误"}",
+                        isGameActive = false
                     )
                 }
             }
@@ -397,49 +408,75 @@ class XiangqiViewModel(
             val redIsLongChecking = redChecks.isNotEmpty() && redChecks.size >= 2 && redChecks.all { it }
             val blackIsLongChecking = blackChecks.isNotEmpty() && blackChecks.size >= 2 && blackChecks.all { it }
 
+            val playerSide = _uiState.value.playerSide
             return when {
                 redIsLongChecking && !blackIsLongChecking -> {
                     _uiState.update {
-                        it.copy(gameOverMessage = "长将判负！红方连续长将被判为违规，黑方获胜！")
+                        it.copy(
+                            gameOverMessage = "长将判负！红方连续长将被判为违规，黑方获胜！",
+                            isGameActive = false
+                        )
                     }
+                    saveGameRecord(if (playerSide == Side.RED) "LOSE" else "WIN")
                     true
                 }
                 blackIsLongChecking && !redIsLongChecking -> {
                     _uiState.update {
-                        it.copy(gameOverMessage = "长将判负！黑方（AI）连续长将被判为违规，红方获胜！")
+                        it.copy(
+                            gameOverMessage = "长将判负！黑方（AI）连续长将被判为违规，红方获胜！",
+                            isGameActive = false
+                        )
                     }
+                    saveGameRecord(if (playerSide == Side.BLACK) "LOSE" else "WIN")
                     true
                 }
                 else -> {
                     _uiState.update {
-                        it.copy(gameOverMessage = "对局和棋：双方触发三次重复局面，不变作和。")
+                        it.copy(
+                            gameOverMessage = "对局和棋：双方触发三次重复局面，不变作和。",
+                            isGameActive = false
+                        )
                     }
+                    saveGameRecord("DRAW")
                     true
                 }
             }
         }
 
+        val playerSide = _uiState.value.playerSide
         return when {
             isCheckmate -> {
                 // 被将杀的是 currentTurn 方
                 val winner = if (state.currentTurn == Side.RED) "黑方" else "红方"
                 val loser = if (state.currentTurn == Side.RED) "红方" else "黑方"
                 _uiState.update {
-                    it.copy(gameOverMessage = "将杀！${winner}获胜！${loser}被将死。")
+                    it.copy(
+                        gameOverMessage = "将杀！${winner}获胜！${loser}被将死。",
+                        isGameActive = false
+                    )
                 }
+                saveGameRecord(if (state.currentTurn == playerSide) "LOSE" else "WIN")
                 true
             }
             isStalemate -> {
                 val stalemateSide = if (state.currentTurn == Side.RED) "红方" else "黑方"
                 _uiState.update {
-                    it.copy(gameOverMessage = "困毙！${stalemateSide}无子可动，对方获胜。")
+                    it.copy(
+                        gameOverMessage = "困毙！${stalemateSide}无子可动，对方获胜。",
+                        isGameActive = false
+                    )
                 }
+                saveGameRecord(if (state.currentTurn == playerSide) "LOSE" else "WIN")
                 true
             }
             isDraw -> {
                 _uiState.update {
-                    it.copy(gameOverMessage = "对局和棋：双方连续 60 回合未吃子。")
+                    it.copy(
+                        gameOverMessage = "对局和棋：双方连续 60 回合未吃子。",
+                        isGameActive = false
+                    )
                 }
+                saveGameRecord("DRAW")
                 true
             }
             else -> {
@@ -454,9 +491,8 @@ class XiangqiViewModel(
     fun onNewGame() {
         cancelAiJob()
         _uiState.update {
-            XiangqiUiState(
-                showDifficultyDialog = true,
-                difficulty = it.difficulty  // 保留上次选择的难度
+            it.copy(
+                showDifficultyDialog = true
             )
         }
     }
@@ -471,7 +507,7 @@ class XiangqiViewModel(
      */
     fun onUndo() {
         val currentState = _uiState.value
-        if (currentState.isAiThinking || currentState.gameOverMessage != null) return
+        if (currentState.isAiThinking) return
 
         // 至少需要2个历史状态（AI走后的和AI走前的）才能回退两步
         if (stateHistory.size < 2) return
@@ -489,6 +525,9 @@ class XiangqiViewModel(
             if (history.size >= 2) history.dropLast(2) else emptyList()
         }
 
+        // 悔棋后允许重新保存对局记录
+        recordSaved = false
+
         val isInCheck = previousState.status == com.example.chessarena.game.xiangqi.GameStatus.CHECK || XiangqiRules.isInCheck(previousState, previousState.currentTurn)
         _uiState.update {
             it.copy(
@@ -500,7 +539,8 @@ class XiangqiViewModel(
                 capturedByPlayer = capturedByPlayer.toList(),
                 capturedByAi = capturedByAi.toList(),
                 gameOverMessage = null,
-                isInCheck = isInCheck
+                isInCheck = isInCheck,
+                isGameActive = true
             )
         }
     }
@@ -517,8 +557,43 @@ class XiangqiViewModel(
         _uiState.update {
             it.copy(
                 isAiThinking = false,
-                gameOverMessage = "红方认输，黑方获胜！"
+                gameOverMessage = "红方认输，黑方获胜！",
+                isGameActive = false
             )
+        }
+        
+        saveGameRecord("LOSE")
+    }
+
+    /**
+     * 自动保存象棋对局记录
+     */
+    private fun saveGameRecord(result: String) {
+        if (recordSaved) return
+        recordSaved = true
+
+        val state = _uiState.value
+        val history = state.moveHistory
+        if (history.isEmpty()) return
+
+        val record = GameRecord(
+            id = java.util.UUID.randomUUID().toString(),
+            gameType = "xiangqi",
+            difficulty = state.difficulty.displayName,
+            playerSide = if (state.playerSide == Side.RED) "执红" else "执黑",
+            result = result,
+            moves = history,
+            timestamp = System.currentTimeMillis(),
+            movesCount = history.size,
+            durationSeconds = history.size * 6L // 估算平均每步6秒
+        )
+
+        viewModelScope.launch(dispatcher) {
+            try {
+                DataRepository.saveGameRecord(record)
+            } catch (t: Throwable) {
+                Log.e("XiangqiViewModel", "Failed to save game record", t)
+            }
         }
     }
 

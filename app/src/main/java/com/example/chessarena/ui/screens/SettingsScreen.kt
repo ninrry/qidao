@@ -53,6 +53,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.chessarena.R
 import com.example.chessarena.theme.AccentGold
 import com.example.chessarena.theme.ChineseRed
+import com.example.chessarena.theme.DeepInk
 import com.example.chessarena.theme.OnSurfaceDarkSecondary
 import com.example.chessarena.theme.SilkWhite
 import com.example.chessarena.theme.StoneGray
@@ -85,7 +86,7 @@ fun SettingsScreen(
                     Text(
                         "对局偏好",
                         fontWeight = FontWeight.Bold,
-                        color = SilkWhite,
+                        color = if (isDark) SilkWhite else DeepInk,
                         letterSpacing = 1.sp
                     )
                 },
@@ -94,21 +95,22 @@ fun SettingsScreen(
                         Icon(
                             painter = painterResource(id = R.drawable.ic_back_leaf),
                             contentDescription = "返回",
-                            tint = SilkWhite,
+                            tint = if (isDark) SilkWhite else DeepInk,
                             modifier = Modifier.size(24.dp)
                         )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color.Transparent,
-                    titleContentColor = SilkWhite
+                    titleContentColor = if (isDark) SilkWhite else DeepInk
                 ),
                 modifier = Modifier.background(
                     Brush.verticalGradient(
-                        colors = listOf(
-                            Color(0xFF1E1E24),
-                            Color(0xFF121215)
-                        )
+                        colors = if (isDark) {
+                            listOf(Color(0xFF1E1E24), Color(0xFF121215))
+                        } else {
+                            listOf(Color(0xFFE6E1D4), Color(0xFFFCFAF2))
+                        }
                     )
                 )
             )
@@ -167,7 +169,11 @@ fun SettingsScreen(
                                 Text(
                                     theme.description,
                                     fontSize = 9.sp,
-                                    color = if (isSelected) SilkWhite.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                                    color = if (isSelected) {
+                                        if (isDark) SilkWhite.copy(alpha = 0.8f) else DeepInk.copy(alpha = 0.8f)
+                                    } else {
+                                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                                    }
                                 )
                             }
                         }
@@ -331,11 +337,12 @@ fun SettingsGroup(
     modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit
 ) {
+    val isDark = androidx.compose.foundation.isSystemInDarkTheme()
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color(0xEE1C1E2A)
+            containerColor = if (isDark) Color(0xEE1C1E2A) else Color(0xFFF5F2EA)
         ),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.15f)),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
@@ -350,7 +357,7 @@ fun SettingsGroup(
             Text(
                 title,
                 fontWeight = FontWeight.Bold,
-                color = AccentGold,
+                color = if (isDark) AccentGold else Color(0xFFB33E3E),
                 fontSize = 15.sp,
                 letterSpacing = 1.sp
             )
@@ -368,6 +375,12 @@ fun SettingsSwitchRow(
     iconResId: Int,
     modifier: Modifier = Modifier
 ) {
+    val isDark = androidx.compose.foundation.isSystemInDarkTheme()
+    val textColor = if (isDark) SilkWhite else DeepInk
+    val subTextColor = if (isDark) OnSurfaceDarkSecondary else StoneGray
+    val activeColor = if (isDark) AccentGold else Color(0xFFB33E3E)
+    val idleColor = if (isDark) OnSurfaceDarkSecondary.copy(alpha = 0.5f) else StoneGray.copy(alpha = 0.5f)
+
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -378,7 +391,7 @@ fun SettingsSwitchRow(
         Icon(
             painter = painterResource(id = iconResId),
             contentDescription = null,
-            tint = if (checked) AccentGold else OnSurfaceDarkSecondary.copy(alpha = 0.5f),
+            tint = if (checked) activeColor else idleColor,
             modifier = Modifier
                 .size(32.dp)
                 .padding(end = 12.dp)
@@ -392,12 +405,12 @@ fun SettingsSwitchRow(
         ) {
             Text(
                 title,
-                style = MaterialTheme.typography.bodyLarge.copy(color = SilkWhite),
+                style = MaterialTheme.typography.bodyLarge.copy(color = textColor),
                 fontWeight = FontWeight.SemiBold
             )
             Text(
                 description,
-                style = MaterialTheme.typography.bodySmall.copy(color = OnSurfaceDarkSecondary),
+                style = MaterialTheme.typography.bodySmall.copy(color = subTextColor),
                 lineHeight = 16.sp
             )
         }
@@ -406,10 +419,10 @@ fun SettingsSwitchRow(
             checked = checked,
             onCheckedChange = onCheckedChange,
             colors = SwitchDefaults.colors(
-                checkedThumbColor = AccentGold,
-                checkedTrackColor = Color(0x66E9C46A),
+                checkedThumbColor = activeColor,
+                checkedTrackColor = activeColor.copy(alpha = 0.3f),
                 uncheckedThumbColor = StoneGray,
-                uncheckedTrackColor = Color(0x11FFFFFF)
+                uncheckedTrackColor = if (isDark) Color(0x11FFFFFF) else Color(0x11000000)
             )
         )
     }

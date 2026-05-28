@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.sp
 import com.example.chessarena.XiangqiGame
 import com.example.chessarena.GomokuGame
 import com.example.chessarena.Settings
+import com.example.chessarena.History
 import com.example.chessarena.R
 import com.example.chessarena.theme.*
 import kotlinx.coroutines.delay
@@ -108,7 +109,7 @@ fun HomeScreen(
                 currentTab = 0,
                 onTabClick = { index ->
                     when (index) {
-                        1 -> { }
+                        1 -> onNavigateTo(History)
                         2 -> onNavigateTo(Settings)
                     }
                 }

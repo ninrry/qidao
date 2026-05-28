@@ -93,6 +93,21 @@ enum class Difficulty(
     /** 全国冠军 - 终极棋圣 中村茂 */
     GOMOKU_TOP("终极棋圣 中村茂", "日本五子棋界泰斗，四十载不败神话，战术极限推演，无限制引擎驱动", 0, 4000L);
 
+    fun formatThinkTime(): String {
+        return when (this.maxThinkTime) {
+            500L -> "极速 (0.5s/步)"
+            900L -> "快速 (0.9s/步)"
+            1000L -> "快速 (1.0s/步)"
+            1600L -> "稳健 (1.6s/步)"
+            2000L -> "稳健 (2.0s/步)"
+            2600L -> "深思 (2.6s/步)"
+            4000L -> "长考 (4.0s/步)"
+            6000L -> "慢棋 (6.0s/步)"
+            9000L -> "慢棋 (9.0s/步)"
+            else -> "${this.maxThinkTime / 1000f}s/步"
+        }
+    }
+
     companion object {
         /** 获取象棋的所有难度等级 */
         fun xiangqiDifficulties(): List<Difficulty> = listOf(

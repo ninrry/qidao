@@ -1,8 +1,11 @@
 package com.example.chessarena.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.chessarena.data.GamePreferences
+import com.example.chessarena.data.GameRecord
+import com.example.chessarena.data.DataRepository
 import com.example.chessarena.engine.ChessEngine
 import com.example.chessarena.engine.Difficulty
 import com.example.chessarena.engine.GomokuEngine
@@ -27,6 +30,7 @@ import kotlin.math.abs
 data class GomokuUiState(
     val gameState: GomokuState? = null,
     val isAiThinking: Boolean = false,
+    val evaluation: Int = 0,
     val difficulty: Difficulty = Difficulty.GOMOKU_SENIOR,
     val showDifficultyDialog: Boolean = true,
     val gameOverMessage: String? = null,
@@ -34,7 +38,8 @@ data class GomokuUiState(
     val forbiddenMoves: List<Pair<Int, Int>> = emptyList(),
     val winningLine: List<Pair<Int, Int>> = emptyList(),
     val playerSide: Stone = Stone.BLACK,
-    val engineHealthError: String? = null
+    val engineHealthError: String? = null,
+    val isGameActive: Boolean = false
 )
 
 class GomokuViewModel(
@@ -50,6 +55,7 @@ class GomokuViewModel(
     private var aiJob: Job? = null
     private var aiGeneration = 0
     private val stateHistory = mutableListOf<GomokuState>()
+    private var recordSaved = false
 
     init {
         viewModelScope.launch {
@@ -70,6 +76,7 @@ class GomokuViewModel(
             val initialState = GomokuState.initial(useRenju = true)
             stateHistory.clear()
             stateHistory.add(initialState)
+            recordSaved = false
 
             val forbidden = withContext(dispatcher) {
                 GomokuRules.getForbiddenMoves(initialState)
@@ -81,7 +88,8 @@ class GomokuViewModel(
                     difficulty = difficulty,
                     showDifficultyDialog = false,
                     forbiddenMoves = forbidden,
-                    playerSide = playerSide
+                    playerSide = playerSide,
+                    isGameActive = true
                 )
             }
 
@@ -114,10 +122,12 @@ class GomokuViewModel(
         val stoneName = if (gameState.currentTurn == Stone.BLACK) "黑" else "白"
         val notation = "$stoneName ${'A' + col}${row + 1}"
 
+        val eval = evaluateGomokuState(newState)
         _uiState.update {
             it.copy(
                 gameState = newState,
                 moveHistory = it.moveHistory + notation,
+                evaluation = eval,
                 forbiddenMoves = emptyList() // 落子后切换，只有黑方有禁手
             )
         }
@@ -162,10 +172,12 @@ class GomokuViewModel(
                         GomokuRules.getForbiddenMoves(newState)
                     }
 
+                    val eval = evaluateGomokuState(newState)
                     _uiState.update {
                         it.copy(
                             gameState = newState,
                             isAiThinking = false,
+                            evaluation = eval,
                             moveHistory = it.moveHistory + notation,
                             forbiddenMoves = forbidden
                         )
@@ -176,7 +188,8 @@ class GomokuViewModel(
                     _uiState.update {
                         it.copy(
                             isAiThinking = false,
-                            gameOverMessage = "棋盘已满，和棋！"
+                            gameOverMessage = "棋盘已满，和棋！",
+                            isGameActive = false
                         )
                     }
                 }
@@ -187,7 +200,8 @@ class GomokuViewModel(
                 _uiState.update {
                     it.copy(
                         isAiThinking = false,
-                        gameOverMessage = "五子棋引擎错误: ${e.message}"
+                        gameOverMessage = "五子棋引擎错误: ${e.message}",
+                        isGameActive = false
                     )
                 }
             }
@@ -220,15 +234,18 @@ class GomokuViewModel(
     }
 
     private fun checkGameOver(state: GomokuState): Boolean {
+        val playerSide = _uiState.value.playerSide
         return when (state.status) {
             GomokuStatus.BLACK_WIN -> {
                 val winningLine = findWinningLine(state, Stone.BLACK)
                 _uiState.update {
                     it.copy(
                         gameOverMessage = "五连！黑方获胜！",
-                        winningLine = winningLine
+                        winningLine = winningLine,
+                        isGameActive = false
                     )
                 }
+                saveGameRecord(if (playerSide == Stone.BLACK) "WIN" else "LOSE")
                 true
             }
             GomokuStatus.WHITE_WIN -> {
@@ -241,7 +258,8 @@ class GomokuViewModel(
                     _uiState.update {
                         it.copy(
                             gameOverMessage = "禁手判负！黑方落子在禁手点（X 标记处），白方获胜！",
-                            winningLine = emptyList()
+                            winningLine = emptyList(),
+                            isGameActive = false
                         )
                     }
                 } else {
@@ -249,16 +267,22 @@ class GomokuViewModel(
                     _uiState.update {
                         it.copy(
                             gameOverMessage = "五连！白方获胜！",
-                            winningLine = winningLine
+                            winningLine = winningLine,
+                            isGameActive = false
                         )
                     }
                 }
+                saveGameRecord(if (playerSide == Stone.WHITE) "WIN" else "LOSE")
                 true
             }
             GomokuStatus.DRAW -> {
                 _uiState.update {
-                    it.copy(gameOverMessage = "棋盘已满，和棋！")
+                    it.copy(
+                        gameOverMessage = "棋盘已满，和棋！",
+                        isGameActive = false
+                    )
                 }
+                saveGameRecord("DRAW")
                 true
             }
             else -> false
@@ -303,16 +327,15 @@ class GomokuViewModel(
     fun onNewGame() {
         cancelAiJob()
         _uiState.update {
-            GomokuUiState(
-                showDifficultyDialog = true,
-                difficulty = it.difficulty
+            it.copy(
+                showDifficultyDialog = true
             )
         }
     }
 
     fun onUndo() {
         val currentState = _uiState.value
-        if (currentState.isAiThinking || currentState.gameOverMessage != null) return
+        if (currentState.isAiThinking) return
 
         if (stateHistory.size < 2) return
 
@@ -323,17 +346,23 @@ class GomokuViewModel(
             if (history.size >= 2) history.dropLast(2) else emptyList()
         }
 
+        // 悔棋后允许重新保存对局记录
+        recordSaved = false
+
         viewModelScope.launch {
             val forbidden = withContext(dispatcher) {
                 GomokuRules.getForbiddenMoves(previousState)
             }
+            val eval = evaluateGomokuState(previousState)
             _uiState.update {
                 it.copy(
                     gameState = previousState,
                     moveHistory = newHistory,
+                    evaluation = eval,
                     forbiddenMoves = forbidden,
                     winningLine = emptyList(),
-                    gameOverMessage = null
+                    gameOverMessage = null,
+                    isGameActive = true
                 )
             }
         }
@@ -348,8 +377,43 @@ class GomokuViewModel(
         _uiState.update {
             it.copy(
                 isAiThinking = false,
-                gameOverMessage = "黑方认输，白方获胜！"
+                gameOverMessage = "黑方认输，白方获胜！",
+                isGameActive = false
             )
+        }
+
+        saveGameRecord("LOSE")
+    }
+
+    /**
+     * 自动保存五子棋对局记录
+     */
+    private fun saveGameRecord(result: String) {
+        if (recordSaved) return
+        recordSaved = true
+
+        val state = _uiState.value
+        val history = state.moveHistory
+        if (history.isEmpty()) return
+
+        val record = GameRecord(
+            id = java.util.UUID.randomUUID().toString(),
+            gameType = "gomoku",
+            difficulty = state.difficulty.displayName,
+            playerSide = if (state.playerSide == Stone.BLACK) "执黑" else "执白",
+            result = result,
+            moves = history,
+            timestamp = System.currentTimeMillis(),
+            movesCount = history.size,
+            durationSeconds = history.size * 5L // 估算平均每步5秒
+        )
+
+        viewModelScope.launch(dispatcher) {
+            try {
+                DataRepository.saveGameRecord(record)
+            } catch (t: Throwable) {
+                Log.e("GomokuViewModel", "Failed to save game record", t)
+            }
         }
     }
 
@@ -405,6 +469,94 @@ class GomokuViewModel(
         aiJob?.cancel()
         engine.stop()
         aiGeneration += 1
+    }
+
+    /**
+     * 局面 5 子滑动窗口局势评估算法
+     */
+    private fun evaluateGomokuState(state: GomokuState): Int {
+        var blackScore = 0
+        var whiteScore = 0
+        val board = state.board
+        val size = GomokuState.SIZE
+        val windowSize = 5
+
+        fun evaluateWindow(b: Int, w: Int) {
+            if (b > 0 && w > 0) return
+            if (b > 0) {
+                when (b) {
+                    5 -> blackScore += 80000
+                    4 -> blackScore += 4500
+                    3 -> blackScore += 320
+                    2 -> blackScore += 25
+                    1 -> blackScore += 1
+                }
+            } else if (w > 0) {
+                when (w) {
+                    5 -> whiteScore += 80000
+                    4 -> whiteScore += 4500
+                    3 -> whiteScore += 320
+                    2 -> whiteScore += 25
+                    1 -> whiteScore += 1
+                }
+            }
+        }
+
+        // 1. 横向
+        for (r in 0 until size) {
+            for (c in 0..size - windowSize) {
+                var b = 0
+                var w = 0
+                for (i in 0 until windowSize) {
+                    val stone = board[r * size + (c + i)]
+                    if (stone == Stone.BLACK) b++ else if (stone == Stone.WHITE) w++
+                }
+                evaluateWindow(b, w)
+            }
+        }
+
+        // 2. 纵向
+        for (c in 0 until size) {
+            for (r in 0..size - windowSize) {
+                var b = 0
+                var w = 0
+                for (i in 0 until windowSize) {
+                    val stone = board[(r + i) * size + c]
+                    if (stone == Stone.BLACK) b++ else if (stone == Stone.WHITE) w++
+                }
+                evaluateWindow(b, w)
+            }
+        }
+
+        // 3. 主对角线 (左上至右下)
+        for (r in 0..size - windowSize) {
+            for (c in 0..size - windowSize) {
+                var b = 0
+                var w = 0
+                for (i in 0 until windowSize) {
+                    val stone = board[(r + i) * size + (c + i)]
+                    if (stone == Stone.BLACK) b++ else if (stone == Stone.WHITE) w++
+                }
+                evaluateWindow(b, w)
+            }
+        }
+
+        // 4. 副对角线 (右上至左下)
+        for (r in 0..size - windowSize) {
+            for (c in windowSize - 1 until size) {
+                var b = 0
+                var w = 0
+                for (i in 0 until windowSize) {
+                    val stone = board[(r + i) * size + (c - i)]
+                    if (stone == Stone.BLACK) b++ else if (stone == Stone.WHITE) w++
+                }
+                evaluateWindow(b, w)
+            }
+        }
+
+        val rawDiff = blackScore - whiteScore
+        val scaled = (rawDiff * 0.15f).toInt()
+        return maxOf(-1000, minOf(1000, scaled))
     }
 
     private suspend fun ensureEngineReady() {
