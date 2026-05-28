@@ -29,10 +29,6 @@ android {
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
-        ndk {
-            abiFilters.add("arm64-v8a")
-            abiFilters.add("x86_64")
-        }
     }
 
     signingConfigs {
@@ -68,6 +64,14 @@ android {
             isShrinkResources = true
             signingConfig = signingConfigs.getByName("releaseLocal")
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+        }
+    }
+    splits {
+        abi {
+            isEnable = true
+            reset()
+            include("arm64-v8a", "x86_64")
+            isUniversalApk = false
         }
     }
     externalNativeBuild {
